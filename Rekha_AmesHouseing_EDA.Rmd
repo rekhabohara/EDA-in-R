@@ -1,5 +1,5 @@
 ---
-title: Exploratory Data Analysis & Visualisation/G 11374/11517 Semester 1 2022 Final Project
+title: Exploratory Data Analysis & Visualisation
 author: "Rekha_Bohara-u880783"
 date: "04/05/2022"
 output:
