@@ -1,6 +1,6 @@
 ---
 title: Exploratory Data Analysis & Visualisation
-author: "Rekha_Bohara-u880783"
+author: "Rekha_Bohara
 date: "04/05/2022"
 output:
 task description: "This project is focused on the development of a housing price prediction model from the use of feature and price data on properties sold in Ames"
