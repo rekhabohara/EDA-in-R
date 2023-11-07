@@ -1,0 +1,905 @@
+---
+title: Exploratory Data Analysis & Visualisation/G 11374/11517 Semester 1 2022 Final Project
+author: "Rekha_Bohara-u880783"
+date: "04/05/2022"
+output:
+task description: "This project is focused on the development of a housing price prediction model from the use of feature and price data on properties sold in Ames"
+---
+***Introduction:*** Ames Housing Data Analysis
+This project aims to bring a full report on analysis the Ames Housing data set which helps real estate company and sales team over some insight on price and house sold over different variable and time frame .
+
+**Objectives:**
+The goal of the project is to show that the characteristics of a dream house of a buyer  property (internal ones such as type and quality of construction, and external ones like locality) do exhibit intrinsic influence on its sale price, thus the accurate prediction of a property's market price could facilitate due diligence checks, such as appraisals for mortgage financing, sales forecast, and analysis 
+
+To analyze data in order to help provide insight for sales team into how the firm can increase sales for highest profits, and to quantify and communicate to the company management what types of real estate properties are sold most in highest price as per different categories and variable attached  with real estate.
+
+*As a fist step let us look at the data ,summary as well as distribution of sale prices*  
+ 
+***Step 1: Understand my data***
+
+*To load the data:check structure, variables and observation* 
+```{r}
+#clean Console  as command (CTRL + L)
+cat("\014") 
+#clean all global variables
+rm(list = ls())
+
+#Library:
+library(heatmaply)
+library (tidyverse)
+library (dplyr)
+library(corrplot)
+library(GGally)
+library(caret)
+library(modelr)
+
+#Fetch Data
+parent_directory <-  dirname(rstudioapi::getSourceEditorContext()$path)
+print(parent_directory)
+setwd(parent_directory)
+
+csv_files <- list.files(parent_directory, pattern = ".csv" ,full.names = FALSE )
+csv_dataframe <- sub(".csv","",csv_files)
+print(csv_dataframe)
+
+for (i in 1:length(csv_files)){ # create aloop as per length count of csv file list
+  df_name <- sub(".csv","", csv_files[i])  #replaces the  match of all elements from loop
+  file_data<- (csv_files[i]) # Single file name to works
+  data <- assign(df_name,read_csv(file_data,show_col_types = FALSE))
+}
+
+ggplot(data = train , aes(train$SalePrice)) + geom_histogram( bins=30,col="white") + theme_classic() + 
+  xlab("Price of Houses") + 
+  ggtitle("Distribution of house prices irrespective of neighborhoods")
+
+
+```
+***Analysis***
+Looking at our data Our train and test data set has 1460 rows and 81 columns.Actual Variables focus on the quality and quantity of many physical attributes of the property.Data set contained 23 nominal variables and 23 ordinal variables.
+We also did note that  distribution is positively skewed  to right with outlines.There are more inexpensive houses than expensive ones.When modeling this outcome, a strong argument can be made that the price should be log-transformed 
+
+**Some Important Insights over Data set:**
+Data Dictionary
+1.	Order (Discrete): Observation number
+
+2.	PID (Nominal): Parcel identification number - can be used with city web site for parcel review.
+
+3.	MS Subclass (Nominal): Identifies the type of dwelling involved in the sale.
+
+4.	MS Zoning (Nominal): Identifies the general zoning classification of the sale.
+
+5.	Lot Frontage (Continuous): Linear feet of street connected to property
+
+6.	Lot Area (Continuous): Lot size in square feet
+
+7.	Street (Nominal): Type of road access to property
+
+8.	Alley (Nominal): Type of alley access to property
+
+9.	Lot Shape (Ordinal): General shape of property
+
+10.	Land Contour (Nominal): Flatness of the property
+
+11.	Utilities (Ordinal): Type of utilities available
+
+12.	Lot Config (Nominal): Lot configuration
+
+13.	Land Slope (Ordinal): Slope of property
+
+14.	Neighborhood (Nominal): Physical locations within Ames city limits (map available)
+
+15.	Condition 1 (Nominal): Proximity to various conditions
+
+16.	Condition 2 (Nominal): Proximity to various conditions (if more than one is present)
+
+17.	Bldg. Type (Nominal): Type of dwelling
+
+18.	House Style (Nominal): Style of dwelling
+
+19.	Overall, Qual (Ordinal): Rates the overall material and finish of the house
+
+20.	Overall Cond (Ordinal): Rates the overall condition of the house.
+
+21.	Year Built (Discrete): Original construction date
+
+22.	Year Remod/Add (Discrete): Remodel date (same as construction date if no remodelling or additions)
+
+23.	Roof Style (Nominal): Type of roof
+
+24.	Roof Matl (Nominal): Roof material
+
+25.	Exterior 1 (Nominal): Exterior covering on house
+
+26.	Exterior 2 (Nominal): Exterior covering on house (if more than one material)
+
+27.	Mas Vnr Type (Nominal): Masonry veneer type
+
+28.	Mas Vnr Area (Continuous): Masonry veneer area in square feet
+
+29.	Exter Qual (Ordinal): Evaluates the quality of the material on the exterior
+
+30.	Exter Cond (Ordinal): Evaluates the present condition of the material on the exterior
+
+31.	Foundation (Nominal): Type of foundation
+
+32.	Bsmt Qual (Ordinal): Evaluates the height of the basement
+
+33.	Bsmt Cond (Ordinal): Evaluates the general condition of the basement
+
+34.	Bsmt Exposure (Ordinal): Refers to walkout or garden level walls
+
+35.	BsmtFin Type 1 (Ordinal): Rating of basement finished area
+
+36.	BsmtFin SF 1 (Continuous): Type 1 finished square feet
+
+37.	BsmtFinType 2 (Ordinal): Rating of basement finished area (if multiple types)
+
+38.	BsmtFin SF 2 (Continuous): Type 2 finished square feet
+
+39.	Bsmt Unf SF (Continuous): Unfinished square feet of basement area
+
+40.	Total Bsmt SF (Continuous): Total square feet of basement area
+
+41.	Heating (Nominal): Type of heating
+
+42.	HeatingQC (Ordinal): Heating quality and condition
+
+43.	Central Air (Nominal): Central air conditioning
+
+44.	Electrical (Ordinal): Electrical system
+
+45.	1st Flr SF (Continuous): First Floor square feet
+
+46.	2nd Flr SF (Continuous) : Second floor square feet
+
+47.	Low Qual Fin SF (Continuous): Low quality finished square feet (all floors)
+
+48.	Gr Liv Area (Continuous): Above grade (ground) living area square feet
+
+49.	Bsmt Full Bath (Discrete): Basement full bathrooms
+
+50.	Bsmt Half Bath (Discrete): Basement half bathrooms
+
+51.	Full Bath (Discrete): Full bathrooms above grade
+
+52.	Half Bath (Discrete): Half baths above grade
+
+53.	Bedroom (Discrete): Bedrooms above grade (does NOT include basement bedrooms)
+
+54.	Kitchen (Discrete): Kitchens above grade
+
+55.	KitchenQual (Ordinal): Kitchen quality
+
+56.	TotRmsAbvGrd (Discrete): Total rooms above grade (does not include bathrooms)
+
+57.	Functional (Ordinal): Home functionality (Assume typical unless deductions are warranted)
+
+58.	Fireplaces (Discrete): Number of fireplaces
+
+59.	FireplaceQu (Ordinal): Fireplace quality
+
+60.	Garage Type (Nominal): Garage location
+
+61.	Garage Yr Blt (Discrete): Year garage was built
+
+62.	Garage Finish (Ordinal) : Interior finish of the garage
+
+63.	Garage Cars (Discrete): Size of garage in car capacity
+
+64.	Garage Area (Continuous): Size of garage in square feet
+
+65.	Garage Qual (Ordinal): Garage quality
+
+66.	Garage Cond (Ordinal): Garage condition
+
+67.	Paved Drive (Ordinal): Paved driveway
+
+68.	Wood Deck SF (Continuous): Wood deck area in square feet
+
+69.	Open Porch SF (Continuous): Open porch area in square feet
+
+70.	Enclosed Porch (Continuous): Enclosed porch area in square feet
+
+71.	Screen Porch (Continuous): Screen porch area in square feet
+
+72.	Pool Area (Continuous): Pool area in square feet
+
+73.	Pool QC (Ordinal): Pool quality
+
+74.	Fence (Ordinal): Fence quality
+
+75.	Misc Feature (Nominal): Miscellaneous feature not covered in other categories
+
+76.	Misc Val (Continuous): $Value of miscellaneous feature
+
+77.	Mo Sold (Discrete): Month Sold (MM)
+
+78.	Yr Sold (Discrete): Year Sold (YYYY)
+
+79.	Sale Type (Nominal): Type of sale
+
+80.	Sale Condition (Nominal): Condition of sale
+
+81.	SalePrice (Continuous): Sale priceDataset
+
+***Step 2:Cleaning and EDA of Categorical AND Numerical,fixed features to identify features in model*** 
+*Problem identification:*
+Let's deal solely with our training data set, train.csv. Clean the data and then we will conduct some EDA, which helps us to establish a preliminary understanding of the data and future feature engineering efforts later in the modeling.
+For every data analysis data cleaning is very important.Detect outliers ,NAs  in data set which can affect the data model and analysis accuracy.Check for Outlines if any with respect to the target variable
+Note at least one key observation, e.g., identified possible missing values or outliers for a particular area/suburb or year e.g.,2016 is significantly higher. Or perhaps one column is missing more than 50% of its values.Replace missing values with the mean of numeric data and with the mode of categorical data. 
+
+*Check Missing value percentage % & Replacing NAs missing values  For train*
+```{r}
+# check for missing values in all columns of the data set
+na_values <- data.frame(sapply(train,function(x)sum(is.na(x) )))
+colnames(na_values) <- ("Sum")
+na_df <- na_values %>% filter(Sum>0)
+na_df %>%  mutate(na_percent = (na_df$Sum/nrow(train) )*100)  
+#Fill missing values
+train$LotFrontage[is.na(train$LotFrontage)]<-mean(train$LotFrontage,na.rm=TRUE)
+#Check & Replacing NAs missing values  For test*
+# check for missing values in all columns of the data set
+na_values <- data.frame(sapply(test,function(x)sum(is.na(x) )))
+colnames(na_values) <- ("Sum")
+na_df <- na_values %>% filter(Sum>0)
+na_df %>%  mutate(na_percent = (na_df$Sum/nrow(test) )*100)  
+#Fill missing values
+test$LotFrontage[is.na(test$LotFrontage)]<-mean(test$LotFrontage,na.rm=TRUE)
+
+```
+***Analysis***
+"MiscFeature"- NULL # Missing value in 96.4% of observations
+"Alley" -NULL # Missing value in 93.2% of observations
+"PoolQC"- NULL # Missing value in 99.7% of observations
+"Fence" - NULL # Missing value in 92.7% of observations
+"FireplaceQu" - NULL # Missing value in 50.035% of observations
+
+From the above Sum and na_percentage in data ,
+Check for missing values. Replace missing values with the mean of numeric data and with the mode of categorical data
+```{r}
+# check for missing values in all columns of the data set
+sapply(train, function(x) sum(is.na(x)))
+#Fill missing values for Numeric with the mean of numeric data
+num_cols <- names(train)[sapply(train, is.numeric)]
+train$LotFrontage[is.na(train$LotFrontage)]<-mean(train$LotFrontage,na.rm=TRUE)
+train$GarageYrBlt[is.na(train$GarageYrBlt)]<-mean(train$GarageYrBlt,na.rm=TRUE)
+
+#Fill missing values for categorical with with the highest occurrence
+calc_mode <- function(x){
+  
+  # List the distinct / unique values
+  distinct_values <- unique(x)
+  
+  # Count the occurrence of each distinct value
+  distinct_tabulate <- tabulate(match(x, distinct_values))
+  
+  # Return the value with the highest occurrence
+  distinct_values[which.max(distinct_tabulate)]
+}
+
+train$BsmtCond = if_else(is.na(train$BsmtCond), 
+        calc_mode(train$BsmtCond), 
+        train$BsmtCond)
+
+train$BsmtQual = if_else(is.na(train$BsmtQual), 
+                         calc_mode(train$BsmtQual), 
+                         train$BsmtQual)
+
+
+train$BsmtFinType1 = if_else(is.na(train$BsmtFinType1), 
+                         calc_mode(train$BsmtFinType1), 
+                         train$BsmtFinType1)
+
+train$BsmtFinType2 = if_else(is.na(train$BsmtFinType2), 
+                             calc_mode(train$BsmtFinType2), 
+                             train$BsmtFinType2)
+
+
+train$BsmtExposure = if_else(is.na(train$BsmtExposure), 
+                             calc_mode(train$BsmtExposure), 
+                             train$BsmtExposure)
+
+train$GarageType = if_else(is.na(train$GarageType), 
+                            calc_mode(train$GarageType), 
+                            train$GarageType)
+
+train$GarageFinish = if_else(is.na(train$GarageFinish), 
+                           calc_mode(train$GarageFinish), 
+                           train$GarageFinish)
+
+train$GarageQual = if_else(is.na(train$GarageQual), 
+                             calc_mode(train$GarageQual), 
+                             train$GarageQual)
+train$GarageCond = if_else(is.na(train$GarageCond), 
+                           calc_mode(train$GarageCond), 
+                           train$GarageCond)
+train$Electrical = if_else(is.na(train$Electrical), 
+                           calc_mode(train$Electrical), 
+                           train$Electrical)
+
+#Drop unnecessary columns with maximum null values and which less  meaningful 
+drop <- c("Alley","PoolQC","Fence","MiscFeature","Id","FireplaceQu")
+train = train[,!(names(train) %in% drop)]
+train_data_na <- data.frame(na_count= sapply(train,function(x)sum(is.na(x) ))) 
+sapply(train, function(x) sum(is.na(x)))
+
+```
+
+As we go parallel with test data:
+```{r}
+# check for missing values in all columns of the data set
+sapply(test, function(x) sum(is.na(x)))
+
+calc_mode <- function(x){
+  
+  # List the distinct / unique values
+  distinct_values <- unique(x)
+  
+  # Count the occurrence of each distinct value
+  distinct_tabulate <- tabulate(match(x, distinct_values))
+  
+  # Return the value with the highest occurrence
+  distinct_values[which.max(distinct_tabulate)]
+}
+#Remove variables that are missing from >90% of all observations.
+names(test[colSums(is.na(test))/nrow(data) > 0.9])
+
+# Return the value with the highest occurrence for below categorical data
+test$MSZoning = if_else(is.na(test$MSZoning), 
+        calc_mode(test$MSZoning), 
+        test$MSZoning)
+
+test$Utilities = if_else(is.na(test$Utilities), 
+                         calc_mode(test$Utilities), 
+                         test$Utilities)
+
+
+test$Exterior1st = if_else(is.na(test$Exterior1st), 
+                         calc_mode(test$Exterior1st), 
+                         test$Exterior1st)
+
+test$Exterior2nd = if_else(is.na(test$Exterior2nd), 
+                             calc_mode(test$Exterior2nd), 
+                             test$Exterior2nd)
+
+
+test$KitchenQual = if_else(is.na(test$KitchenQual), 
+                             calc_mode(test$KitchenQual), 
+                             test$KitchenQual)
+
+test$Functional = if_else(is.na(test$Functional), 
+                            calc_mode(test$Functional), 
+                            test$Functional)
+
+test$SaleType = if_else(is.na(test$SaleType), 
+                           calc_mode(test$SaleType), 
+                           test$SaleType)
+
+
+test$MasVnrType = if_else(is.na(test$MasVnrType), 
+                           calc_mode(test$MasVnrType), 
+                           test$MasVnrType)
+
+test$BsmtQual = if_else(is.na(test$BsmtQual), 
+                           calc_mode(test$BsmtQual), 
+                           test$BsmtQual)
+
+test$BsmtCond = if_else(is.na(test$BsmtCond), 
+                           calc_mode(test$BsmtCond), 
+                           test$BsmtCond)
+
+test$BsmtExposure = if_else(is.na(test$BsmtExposure), 
+                           calc_mode(test$BsmtExposure), 
+                           test$BsmtExposure)
+
+test$GarageType = if_else(is.na(test$GarageType), 
+                           calc_mode(test$GarageType), 
+                           test$GarageType)
+
+test$GarageFinish = if_else(is.na(test$GarageFinish), 
+                           calc_mode(test$GarageFinish), 
+                           test$GarageFinish)
+
+test$BsmtFinType2 = if_else(is.na(test$BsmtFinType2), 
+                           calc_mode(test$BsmtFinType2), 
+                           test$BsmtFinType2)
+
+test$GarageQual = if_else(is.na(test$GarageQual), 
+                           calc_mode(test$GarageQual), 
+                           test$GarageQual)
+
+
+num_cols <- names(test)[sapply(test, is.numeric)]
+print(num_cols)
+
+# for numeric variable lets rplace NAs with  mean value 
+test$LotFrontage[is.na(test$LotFrontage)]<-mean(test$LotFrontage,na.rm=TRUE)
+test$MasVnrArea[is.na(test$MasVnrArea)]<-mean(test$MasVnrArea,na.rm=TRUE)
+test$BsmtFinSF1[is.na(test$BsmtFinSF1)]<-mean(test$BsmtFinSF1,na.rm=TRUE)
+test$GarageYrBlt  [is.na(test$GarageYrBlt  )]<-mean(test$GarageYrBlt,na.rm=TRUE)
+test$BsmtFinSF2 <- mean(is.na(test$BsmtFinSF2))
+test$BsmtUnfSF  <- mean(is.na(test$BsmtUnfSF))
+test$TotalBsmtSF <- mean(is.na(test$TotalBsmtSF))
+test$BsmtFullBath <- mean(is.na(test$BsmtFullBath))
+test$BsmtHalfBath <- mean(is.na(test$BsmtHalfBath))
+test$GarageCars <- mean(is.na(test$GarageCars))
+test$GarageArea <- mean(is.na(test$GarageArea))
+test$BedroomAbvGr <- mean(is.na(test$BedroomAbvGr))
+test$GarageCond<- mean(is.na(test$GarageCond))
+test$BsmtFinType1 <- mean(is.na(test$BsmtFinType1))
+test$GarageCond  <- mean(is.na(test$GarageCond))
+
+#Drop unnecessary columns with maximum null values and which seems meaningless
+drop <- c("Alley","PoolQC","Fence","MiscFeature","Id","FireplaceQu")
+test = test[,!(names(test) %in% drop)]
+test_data_na <- data.frame(na_count= sapply(test,function(x)sum(is.na(x) ))) 
+sapply(test, function(x) sum(is.na(x)))
+
+```
+*Problem*
+An outlier is defined as an observation which stands far away from most of the other observations. Often an outlier is present due to the measurements error. Therefore, one of the most essential tasks in data analysis is to identify and to remove the outliers as it will degrade our statistical results. 
+
+```{r}
+  ggplot(train, mapping = aes(SalePrice))+
+  geom_boxplot( color ="Red")+
+  scale_x_continuous(labels = scales::comma)+
+  theme_minimal()
+```
+***Analysis***
+So, some of these data points that seem to be outliers are, actually, categorical data Let's keep these outliers as they can be houses which are sold in highest and lowest  price which targeted the sales price record and can be very important for sales to see the records  .
+
+
+*Problem*
+Change Data types : Factor 
+The categorical predictors were converted to R's factor data type. While both the tidyverse and base R have moved away from importing data as factors by default, this data type is a better approach for storing qualitative data for modeling than simple strings
+***Solution***
+```{r}
+
+test[sapply(test, is.character)] <- lapply(test[sapply(test,is.character)],as.factor)
+
+```
+
+***Step 4: Train and evaluate a corr to predict sales prices ***
+*Problem*
+Find strength of a linear relationship between variables so we can start analyzing most  stronger relationships  with our targeted variable Sales price to predict its relationships for out sales team .
+
+*Solution*
+Correlation coefficient indicates the strength of a linear relationship between two variables. Its values vary between -1 and 1. A coefficient with a value close to -1 indicates a strong negative relationship, a coefficient close to 0 suggests the lack of linear relationship, and a coefficient with a value close to 1 suggests a strong positive relationship 
+
+```{r}
+corr_simple <- function(data = train,sig = 0.5){
+  #convert data to numeric in order to run correlations
+  #convert to factor first to keep the integrity of the data - each value will become a number rather than turn into NA
+  df_cor <- data %>% mutate_if(is.character, as.factor)
+  df_cor <- df_cor %>% mutate_if(is.factor, as.numeric)  #run a correlation and drop the insignificant ones
+  corr <- cor(df_cor)
+  #prepare to drop duplicates and correlations of 1     
+  corr[lower.tri(corr,diag = TRUE)] <- NA 
+  #drop perfect correlations
+  corr[corr == 1] <- NA   #turn into a 3-column table
+  corr <- as.data.frame(as.table(corr))
+  #remove the NA values from above 
+  corr <- na.omit(corr)   #select significant values  
+  corr <- subset(corr, abs(Freq) > sig) 
+  #sort by highest correlation
+  corr <- corr[order(-abs(corr$Freq)),]   #print table
+  print(corr)  #turn corr back into matrix in order to plot with corrplot
+  mtx_corr <- reshape2::acast(corr, Var1~Var2, value.var="Freq")
+  #plot correlations visually
+  corrplot(mtx_corr, is.corr = FALSE, tl.col="black", na.label=" ")
+}
+
+corr_simple()
+
+
+```
+***Analysis***
+The darker shades of blue indicate a stronger positive correlation and the red shade indicate a stronger negative correlation. On the other hand, lighter shades show values closer to zero (weaker linear relation)from these features ,I will want to pick the strongest feature and exclude the others since a principle assumption of linear regression models is the independence of features
+
+Explanatory variable pair that exhibited correlations as per graph, consequently decided to drop the "Bathrooms" variable from the regression modeling to reduce multi collinearity.
+
+In my personnel analysis and model prediction greatest impact on the potential #SalePrice of a home are:
+1.	Neighborhood (Nominal)
+2.	House Style 
+3.	Year Built (Discrete)
+4.	Total Bsmt SF 
+5.  BedroomAbvGr (Discrete): Total rooms above grade (does not include bathrooms)
+6.  Yr Sold (Discrete): Year Sold (YYYY)
+7.  MoSold       
+8.  Lot Area (Continuous): Lot size in square feet
+9.  HouseStyle 
+10. Foundation 
+
+
+**Feature Engineering**
+The target variable fit is not the sale price but the logarithm of the sale price. This operation serves to normalize the response variable distribution as well as reduce the effect of large sale prices on the fit value.
+Sale_Price is the response variable in  data set. It is not normally distributed. We will be transforming it using log-log10() transformation in the data transformation Tab later. Right now, we will be using it as it is.
+
+SalePrice (Continuous): Sale predecease
+Next plot is saleprice . Looking at the plot which is our Targeted variable.we will have some insights   
+```{r}
+train <- train %>% mutate(SalePrice = log10(SalePrice))
+# Histogram of Salesprices
+ggplot(train, aes(x = SalePrice))+
+  geom_histogram(color = "yellow", fill = "pink", bins = 50) + 
+  scale_x_continuous() +
+  labs(title = "Distribution of house salesprices", x = "Price", y = "Frequency") +
+  theme_minimal() + scale_x_continuous(labels = scales::comma)
+mean(train$SalePrice)
+
+```
+***Analysis***
+Sale Price is right-skewed; there are more inexpensive houses than expensive ones. The mean sale price is 180411.6
+
+**Step 3: DataVisualization**
+Exploratory data analysis on the variables in the data set including uni variate, bi variate and multivariate plots. Then I will build and compare 3 linear regression models to get a better understanding of the variables that drive the sale prices of houses the most.
+
+*Problem*
+Which is Most expensive neighborhood  for sales to target VIP buyers ?
+1.Neighbourhood (Nominal): Physical locations within Ames 
+```{r}
+ggplot(data=train, aes(x=Neighborhood, y=(SalePrice/100), fill=Neighborhood))+
+  geom_boxplot()+
+  scale_y_continuous(name="Sale Price")+
+  theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+
+
+Neighborhood = tapply(train$SalePrice, train$Neighborhood, median)
+Neighborhood = sort(Neighborhood, decreasing = TRUE)
+
+dotchart(Neighborhood, pch = 21, bg = "purple1",
+         cex = 0.85,
+         xlab="Average price of a house",
+         main = "Which is Most expensive neighborhood sold with the most highest price ?")
+
+```
+***Analysis***
+The neighborhood affects the sales price.clearly many  sales are concentrated on certain neighborhood for lucrative sales. I consider a highly important factor: the Neighborhood. It is seen that Northridge, Northridge Heights and Stony Brook are the most expensive neighborhoods. Northridge Heights has a signficantly large range in the sale price of the houses . but also only few sell were locked as its quite expensive for regualr buyer to affort expensive dream homes.
+
+
+*Problem* 
+Which month sales happens most check monthly sales to predict
+```{r}
+Monthly_sales<- train %>%
+  group_by(MoSold)%>%
+  summarise( Sales = n())%>%
+  mutate(Month_sold = factor(month.abb[MoSold], levels = month.abb))
+Monthly_sales
+
+ggplot(data = Monthly_sales, mapping = aes(x= Month_sold, y= Sales,fill = Month_sold, label = Sales))+
+  geom_col(show.legend = FALSE)+
+  geom_text(aes(label = Sales, color = Month_sold, vjust=-0.2),show.legend = FALSE )+
+  theme_minimal()+
+  labs(title = 'Individual  properties sold in Ames')+
+  xlab(element_blank())+
+  ylab('Number of Properties')
+
+```
+***Analysis***
+For sales team It is clear from the plot that most of the houses were sold in the mid months i.e May, June, July and least were sold in initial and last month.Those three month are pretty busy month for real estate companies .
+
+*Problem*
+which yearly sales happens most? check yearly sales to predict 
+```{r}
+sold_house<- train %>%
+  group_by(YrSold)%>%
+  summarise(Sales = n())
+sold_house
+
+ggplot(sold_house)+
+  geom_col(aes(x = YrSold,y = Sales),color='red',fill='yellow')+
+  theme_minimal()+
+  labs(title="Number of house sold each year",x="Year",y="Count")
+
+
+```
+***Analysis***
+Maximum houses were sold in the year of 2009 with approximate 700 value. 2006,2008 and, 2009 had almost same sales and 2010 is the only year with least sale.we always have to be prepare for different environmental factors i.e Heavy rain , flood that might affect sales even with new year we have growing demand houses and population .To analyse decrease in sales we don't have enough data and details but we should consider going through those data to be well prepare as Sales Team.
+
+
+***Problem***
+HouseStyle- Which house style is most expensive,popular and  sold most ?
+House Style (Nominal): Style of dwelling
+```{r}
+ggplot(data = train, aes(HouseStyle, SalePrice)) + 
+  geom_jitter() + geom_smooth(method="lm")+geom_line(col="red")
+  theme(axis.text.x = element_text(angle = 90)) + 
+  theme(legend.position = "none") + 
+  ggtitle("Median Price in relation to HouseStyle in Ames,Iowa") + 
+  xlab("HouseStyle in Ames, Iowa") +
+  ylab("Median Price") + 
+  theme(plot.title = element_text(size = 5)) + 
+  theme(axis.title = element_text(size = 5)) 
+  
+```
+***Analysis***
+We clearly can see as per House Style is bigger  with more store and rooms sales price increases. its lure more sales price, People buy more 1 story or 2 storey houses as their dream house. 2 storey house wins the is sold as most expensive  house  till now but we should not ignore other dependent factor variable along that price.1 story & 2 Story is top 2 selling house type .  
+
+
+*Problem*
+Next plot is sale price vs BsmtFinSF basement finish sales price as we also have houses with basement unfinished (BsmtUnfSF) & TotalBsmtSF-Total square feet of basement area. Looking at the plot
+Bsmt Unf SF (Continuous): Unfinished square feet of basement area
+Total Bsmt SF (Continuous): Total square feet of basement area
+```{r}
+#BsmtUnfSF
+train$BsmtFinSF <- train$TotalBsmtSF-train$BsmtUnfSF
+test$BsmtFinSF <- test$TotalBsmtSF-test$BsmtUnfSF
+
+train %>%  mutate(train$BsmtFinSF)
+ggplot(train , aes(BsmtFinSF)) + geom_histogram(bins = 60, col = "white") + theme_classic() + 
+  xlab("Price of Houses") + 
+  ggtitle("Distribution of house prices irrespective of BsmtFinSF")
+ames_train_BsmtFinSF <- train %>%
+  group_by(BsmtFinSF) %>%
+  summarise(Price_BsmtFinSF= median(train$SalePrice)) %>%
+  arrange(Price_BsmtFinSF)
+
+#490.189
+```
+*Problem*
+Lot Area (Continuous): Lot size in square feet
+```{r}
+
+ggplot(train)+
+  geom_histogram(aes(LotArea),bins=40,color='red',fill='brown')+
+  geom_vline(aes(xintercept=mean(LotArea)),
+             color="blue", linetype="dashed", size=1)+
+  theme_minimal()+
+  labs(title="Lot Area Distribution",x="Lot Area (sq.ft.)",y="Number of Houses")
+  mean(train$LotArea)
+```
+***Analysis***
+Sales is much higher in between 0 to 3000 lotArea.As its highly skews to right. Most of the houses have lot sizes smaller than 50000 square feet. The mean lot size is 10516.83
+
+
+*Problem*
+Which Foundation_type is most used in Ames properties?
+```{r}
+Foundation_type<- data.frame(table(train$Foundation))
+colnames(Foundation_type)<- c('Foundation','count')
+Foundation_type
+
+ggplot(Foundation_type,mapping = aes(x=Foundation, y=count,fill=Foundation))+
+  geom_col()+
+  theme_minimal()+
+  labs(title = 'Distribution of Foundation')
+
+```
+***Analysis***
+This bar chat shows that most houses were made up using CBlock and PConc and least were made using stone wood and slab.It also might help engineers and  architecture to have some insights  on maintenance and planing . As Materials used can affect sales price of the house too.
+
+
+
+*Problem*
+For more clarity insights on our properties and data sets lets  check some bi variate and multivariate variables which helps us to take decisions in modelling part. 
+.Seasonal-fractional 
+```{r}
+train$year_fraction <- train$YrSold + train$MoSold/12
+ggplot(train , aes(year_fraction)) + geom_histogram(bins = 60, col= "white" ) + theme_classic() + 
+  xlab("Price of Houses") + 
+  ggtitle("Distribution of house prices irrespective of year_fraction")
+ames_train_year_fraction <- train %>%
+  group_by(HouseStyle) %>%
+  summarise(Price_year_fraction = median(train$year_fraction)) %>%
+  arrange(Price_year_fraction)
+
+
+```
+***Analysis***
+Then I found some interesting on month and year sold which shows the seasonality pattern reflection.The warm season lasts for 4 months in ames from  may to  September. The cold season lasts for months from 29 November to 1 March. The coldest month is January.Looking at the graph we can see that in warm season the sale is more.
+
+*Problem*
+How old are the houses ?
+Year Built (Discrete): Original construction date
+```{r}
+# YearBuilt 
+ggplot(train)+
+  geom_density(aes(YearBuilt),color='green',fill='orange')+
+  theme_minimal()+
+  labs(title="Year Built Distribution",x="Year Built",y="Density")
+
+ggplot(train,aes(YearBuilt,SalePrice))+
+  geom_point()+
+  geom_smooth(method='lm', se=FALSE)+
+  scale_y_continuous(labels = scales::comma)+
+  theme_minimal()+ 
+  labs(title="Sale Price VS YearBuilt ",x="YearBuilt",y="Sale Price ($)")
+
+```
+***Analysis***
+We have three major peaks for the years the houses are built. One around 1920, the second around 1960 and the third one after 1990 but from second graph we can clearly see sales price of houses are going up .demands are growing up as per increase in population so we have more buying and selling of houses opportunities .P.s even houses are old we can see few houses are sold in very good  sales price As yea build of house increases it doesn't decreases the price totally by  of sales may be property market is going up day by day .
+
+.*Problem*
+How many bedroom BedroomAbvGr are more sold and does sales price affects as per no of BedroomAbvGr
+```{r}
+
+ggplot(data = train, aes(BedroomAbvGr, SalePrice)) + 
+  geom_jitter() + geom_smooth(method="lm")+ geom_point(col="red")
+  theme(axis.text.x = element_text(angle = 90)) + 
+  theme(legend.position = "none") + 
+  ggtitle("Median Price in relation to BedroomAbvGr in Ames,Iowa") + 
+  xlab("BedroomAbvGr in Ames, Iowa") +
+  ylab("Median Price") + 
+  theme(plot.title = element_text(size = 5)) + 
+  theme(axis.title = element_text(size = 5)) 
+  cor(train$SalePrice,train$BedroomAbvGr)
+  
+```
+***Analysis***
+People  buyed or loved  more 2 to 4 bedroom  house which are above  grade (ground) living area square feet . 4 bedroom  house is comparatively sold in more price.
+
+**Simple Regression**
+**Evaluate a linear regression model to predict sales prices using fixed features**
+We established the relationship to be linear, and now we just need to find some insights 
+the 'closest'  linear model to our data
+Linear regression is a linear approximation of the causal relationship between two or more variables. The aim of using the linear regression is to predict the parameters that explain the relationship between predictors (_i.e.Salesprice, explanatory) variables and predicted (response) variable.
+It follows the general family of y = a + bx + error [population model]
+
+Sale Price VS Lot Area
+```{r}
+train <- train %>% mutate(Sale_Price = log10(SalePrice))
+ggplot(train,aes(LotArea,Sale_Price))+
+  geom_point()+
+  geom_smooth(method='lm', se=FALSE)+
+  scale_y_continuous(labels = scales::comma)+
+  theme_minimal()+ 
+  labs(title="Sale Price VS Lot Area",x="Lot Area (sq. ft.)",y="Sale Price ($)")
+ train %>% summarise(cor(LotArea, Sale_Price))
+ mod <- lm(SalePrice ~ YearBuilt ,data= train)
+  summary(mod)
+  attributes(mod)
+  coef(mod)
+  confint(mod)
+  rmse<- sqrt(mean((train$SalePrice - train$YearBuilt)^2))
+  print(rmse)
+ 
+
+```
+***Analysis***
+We can see that a fairly strong positive correlation exists between lot area and sale price. 
+For houses with a Lot_Area of 0 we expect their mean sale price to be 152869.484 dollars.
+For every 1 square ft increase in Lot_Area, we expect an sale price to increase on an average of 2.73 dollars.We can see that a fairly strong positive correlation exists between lot area and sale price. But we need to be sure that this relationship is not influenced by outliers, so we will filter the houses with less than 100000 lot area and then check the relationship again.
+This equation tells us two things
+For houses with a Lot_Area of 0 we expect their mean sale price to be 152869.484 dollars.
+For every 1 square ft increase in Lot_Area, we expect an sale price to increase on an average of 2.73 dollars.
+For this model, 7.29% of the variability in Sale_Price is explained by Lot_Area.
+
+Consequently, the RMSE is sensitive to outliers, which can be detected
+The RMSE is a square root, and therefore its graph is concave down- IN this model we do have RMSE-186817.9
+The effect of each error is proportional to the size of the squared error 
+Larger errors are therefore penalised much more heavily in the RMSE
+Consequently, the RMSE is sensitive to outliers, which can be detected
+
+,Sale Price VS YearBuilt
+```{r}
+ggplot(train,aes(YearBuilt,SalePrice))+
+  geom_point()+
+  geom_smooth(method='lm', se=FALSE)+
+  scale_y_continuous(labels = scales::comma)+
+  theme_minimal()+ 
+  labs(title="Sale Price VS YearBuilt ",x="YearBuilt",y="Sale Price ($)")
+  mod <- lm(SalePrice ~ YearBuilt ,data= train)
+  summary(mod)
+  attributes(mod)
+  coef(mod)
+  confint(mod)
+  rmse<- sqrt(mean((train$SalePrice - train$YearBuilt)^2))
+  print(rmse)
+```
+***Analysis***
+A strong positive correlation exists between Year built and Sale price. It means that newer houses are sold at higher prices and houses built in the earlier years were sold for lesser prices.
+Residual standard error: 67740 on 1458 degrees of freedom
+
+
+**Further preprocessing:**
+Select the final variables for your model based off your EDA (basically remove the nonsignificant variables)
+```{r}
+model_train <- train %>% select(c("SalePrice","GrLivArea","Foundation","BedroomAbvGr","LotArea","YearBuilt","Neighborhood", "HouseStyle"))
+
+model_test <- test %>% select(c("SalePrice","GrLivArea","Foundation","BedroomAbvGr","LotArea","YearBuilt","Neighborhood", "HouseStyle"))
+
+```
+
+**Step 5: Modelling Train and evaluate a linear regression model to predict sales prices using fixed features**
+```{r}
+#split data into train and test
+library(caret)
+
+index <- createDataPartition(model_train$SalePrice, p = .70, list = FALSE)
+length(model_train$SalePrice)
+
+# build a model1 only between price and the variable with highest correlation with price (i.e. Area_income)
+lmModel_First <- lm(SalePrice ~ LotArea ,model_train)
+print(lmModel_First)
+
+# Validating Regression Coefficients and Models
+summary(lmModel_First)
+# visualize the model
+plot(lmModel_First)
+
+# predicting
+model_test$PreditedPrice_1 <- predict(lmModel_First, model_test)
+head(model_test[ , c("SalePrice", "PreditedPrice_1")])
+
+# compute the residual mean square error (RMSE) as a way of evaluation
+actual <- model_test$SalePrice
+preds <- model_test$PreditedPrice_1
+Model_one_RMSE <- RMSE(preds, actual)
+#Model_one_RMSE_formula <- sqrt(mean((preds - actual)^2))
+
+# build a linear model between the price and all of the other stronly corr variables
+lmModel_second <-  lm(
+  SalePrice~
+    GrLivArea+
+    Foundation+
+    BedroomAbvGr+
+    LotArea+
+    YearBuilt+
+    Neighborhood+
+    HouseStyle ,model_train)
+    summary(lmModel_second)
+
+# Validating Regression Coefficients and Models
+summary(lmModel_second)
+
+# predicting
+model_test$PreditedPrice_2 <- predict(lmModel_second, model_test)
+head(model_test[ , c("SalePrice", "PreditedPrice_1",  "PreditedPrice_2")])
+
+# RMSE
+actual <- model_test$SalePrice
+preds <- model_test$PreditedPrice_2
+Mode2_one_RMSE<- RMSE(preds, actual)
+
+
+#Mode2_one_RMSE_formula <- sqrt(mean((preds - actual)^2))
+plot(lmModel_second)
+
+# post assumptions
+# Visualise the distribution of the residuals for both of the models
+#residuals <- log10(residuals)
+hist(lmModel_First$residuals, color = "grey")
+
+hist(lmModel_second$residuals, color = "grey")
+
+ggplot(lmModel_First, aes(lmModel_First$residuals)) +
+  geom_histogram(aes(y = ..density..), fill = "#C99800") +
+  geom_density(color = "blue")
+
+ggplot(lmModel_second, aes(lmModel_second$residuals)) +
+  geom_histogram(aes(y = ..density..), fill = "#00BCD8") +
+  geom_density(color = "red")
+
+
+```
+***Step 8:Conclusions***
+
+The RMSE for our training and test sets should be very similar if we  have built a good model. If the RMSE for the test set is much higher than that of the training set, it is likely that we've badly over fit the data, i.e. created a model that tests well in sample, but has little predictive value when tested out of sample.
+As per data received from modelling.
+lmModel_First:
+Residual standard error: 0.1677 on 1458 degrees of freedom
+Multiple R-squared:  0.06621,	Adjusted R-squared:  0.06557
+F-statistic: 103.4 on 1 and 1458 DF,  p-value: < 2.2e-16
+
+Mean Square Error (RMSE) is the standard deviation of the residuals (prediction errors). Residuals are a measure of how far from the regression line data points are; RMSE is a measure of how to spread out these residuals are. In other words, it tells you how concentrated the data is around the line of best fit.
+Model2 :
+Residual standard error: 0.07751 on 1419 degrees of freedom
+Multiple R-squared:  0.8059,	Adjusted R-squared:  0.8004 
+F-statistic: 147.3 on 40 and 1419 DF,  p-value: < 2.2e-16
+
+Lets check Residual graph,model distribution graph with RMSe and R square value with p-value.  Low RMSE and high R square value compared between two above model, Model_second is prefers to predict prices as per changes in variables .
+
+
+*Code of Ethics*
+- I have use this data set only for my assignment purposes 
+- I get this data set from my university site for my educational purpose only 
+
+*References:*
+Mostly took reference from EDA course lecture slides,Lab exercises and  university data set and report 
+
+*https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data*
+
+*https://www.amazon.com.au/dp/1491910399?tag=guru99-22&geniuslink=true&asin=B01NAJAEN5&revisionId=d56915a7&format=1&depth=1*
+
+*https://www.kaggle.com/c/house-prices-advanced-regressiontechniques/notebooks?sortBy=hotness&group=everyone&pageSize=20&competitionId=5407&language=R*
+
